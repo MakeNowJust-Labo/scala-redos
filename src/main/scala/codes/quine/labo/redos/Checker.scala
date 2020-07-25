@@ -1,76 +1,72 @@
 package codes.quine.labo.redos
 
+import scala.collection.MultiSet
 import scala.collection.mutable
 
-import Checker._
+import automaton._
+import regexp.RegExp
+import util.Graph
+import Complexity._
 
 object Checker {
-  sealed trait Complexity[+A]
-  final case object Constant extends Complexity[Nothing]
-  final case object Linear extends Complexity[Nothing]
-  final case class Polynomial[A](degree: Int, witness: Witness[A]) extends Complexity[A]
-  final case class Exponential[A](witness: Witness[A]) extends Complexity[A]
-
-  final case class Witness[A](pump: Seq[(Seq[A], Seq[A])], suffix: Seq[A])
-
-  def check[A](r: Regex[A]): Complexity[Option[A]] =
+  def check[A](r: RegExp[A]): Complexity[Option[A]] =
     new Checker(r).check()
 
-  def decompose[A, Q](nfa: NFA[A, Q], reverseDFA: DFA[A, Set[Q]]): NFA[A, (Q, Set[Q])] = {
-    val NFA(alphabet, stateSet, inits, acceptSet, delta) = nfa
+  def decompose[A, Q](nfa: OrderedNFA[A, Q], reverseDFA: DFA[A, Set[Q]]): MultiNFA[A, (Q, Set[Q])] = {
+    val OrderedNFA(alphabet, stateSet, inits, acceptSet, delta) = nfa
 
     val reverseDelta = reverseDFA.delta.groupMap(_._1._2) { case (p2, _) -> p1 => (p1, p2) }.withDefaultValue(Seq.empty)
 
     val newStateSet = for (q <- stateSet; p <- reverseDFA.stateSet) yield (q, p)
-    val newInits = for (q <- inits; p <- reverseDFA.stateSet) yield (q, p)
+    val newInits = MultiSet.from(for (q <- inits; p <- reverseDFA.stateSet) yield (q, p))
     val newAcceptSet = for (q <- reverseDFA.init) yield (q, reverseDFA.init)
 
-    val newDelta = mutable.Map.empty[((Q, Set[Q]), A), Seq[(Q, Set[Q])]].withDefaultValue(Seq.empty)
+    val newDelta = mutable.Map.empty[((Q, Set[Q]), A), MultiSet[(Q, Set[Q])]].withDefaultValue(MultiSet.empty)
     for ((q1, a) -> qs <- delta) {
       for ((p1, p2) <- reverseDelta(a)) {
         val qps = qs
           .zip(qs.inits.toSeq.reverse)
           .filterNot { case (_, qs) => qs.exists(p2.contains(_)) }
           .map(qqs => (qqs._1, p2))
-        newDelta(((q1, p1), a)) = newDelta(((q1, p1), a)) ++ qps
+        newDelta(((q1, p1), a)) = newDelta(((q1, p1), a)) ++ MultiSet.from(qps)
       }
     }
 
-    NFA(alphabet, newStateSet, newInits, newAcceptSet, newDelta.toMap)
+    MultiNFA(alphabet, newStateSet, newInits, newAcceptSet, newDelta.toMap)
   }
 }
 
-final class Checker[A](private[this] val r: Regex[A]) {
-  val nfa = r.toEpsNFA.toNFA.rename
-  val reverseDFA = nfa.reverse.toDFA
-  val decomposedNFA = Checker.decompose(nfa, reverseDFA)
+final class Checker[A](private[this] val r: RegExp[A]) {
+  private[this] val nfa = r.toEpsNFA.toOrderedNFA.rename
+  private[this] val reverseDFA = nfa.reverse.toDFA
+  private[this] val decomposedNFA = Checker.decompose(nfa, reverseDFA)
 
-  val graph = decomposedNFA.toGraph.reachableFrom(decomposedNFA.inits.toSet)
-  val scc = graph.scc
-  val sccMap = (for (sc <- scc; q <- sc) yield q -> sc).toMap
-  val sccGraph = Graph.from(
+  private[this] val graph = decomposedNFA.toGraph.reachable(decomposedNFA.initSet.toSet)
+  private[this] val scc = graph.scc
+  private[this] val sccMap = (for (sc <- scc; q <- sc) yield q -> sc).toMap
+  private[this] val sccGraph = Graph.from(
     graph.edges
       .map { case (q1, _, q2) => (sccMap(q1), (), sccMap(q2)) }
       .filter { case (sc1, _, sc2) => sc1 != sc2 }
       .distinct
   )
 
-  val psccMap = scc.map(sc => sc -> sc.map(_._2).toSet).toMap
+  private[this] val psccMap = scc.map(sc => sc -> sc.map(_._2).toSet).toMap
 
-  val sccReachableMap = sccGraph.reachableMap
-  val sccReverseReachableMap = sccGraph.reverse.reachableMap
-  val sccPairEdges = graph.edges
+  private[this] val sccReachableMap = sccGraph.reachableMap
+  private[this] val sccReverseReachableMap = sccGraph.reverse.reachableMap
+  private[this] val sccPairEdges = graph.edges
     .groupMap { case (q1, a, q2) => (sccMap(q1), sccMap(q2)) } { case (q1, a, q2) => a -> (q1, q2) }
     .view
     .mapValues(_.groupMap(_._1)(_._2).withDefaultValue(Seq.empty))
     .toMap
     .withDefaultValue(Map.empty.withDefaultValue(Seq.empty))
 
-  type Q = (Int, Set[Int])
-  type Pump = (Q, Seq[Option[A]], Q)
+  private type Q = (Int, Set[Int])
+  private type Pump = (Q, Seq[Option[A]], Q)
 
-  def isAtom(sc: Seq[Q]): Boolean =
-    sc.size == 1 && !graph.adj(sc.head).exists(_._2 == sc.head)
+  private[this] def isAtom(sc: Seq[Q]): Boolean =
+    sc.size == 1 && !graph.neighbors(sc.head).exists(_._2 == sc.head)
 
   def check(): Complexity[Option[A]] =
     checkExponential() match {
@@ -83,11 +79,11 @@ final class Checker[A](private[this] val r: Regex[A]) {
         }
     }
 
-  def checkExponential(): Option[Pump] = {
+  private[this] def checkExponential(): Option[Pump] = {
     scc.iterator.filterNot(isAtom(_)).flatMap(checkExponentialComponent(_)).nextOption()
   }
 
-  def checkExponentialComponent(sc: Seq[Q]): Option[Pump] = {
+  private[this] def checkExponentialComponent(sc: Seq[Q]): Option[Pump] = {
     val edges = sccPairEdges((sc, sc))
 
     edges.find { case (_, es) => es.size != es.distinct.size } match {
@@ -116,16 +112,20 @@ final class Checker[A](private[this] val r: Regex[A]) {
     }
   }
 
-  def checkPolynomial(): (Int, Seq[Pump]) =
+  private[this] def checkPolynomial(): (Int, Seq[Pump]) =
     scc.map(checkPolynomialComponent(_)).maxBy(_._1)
 
   private[this] val checkPolynomialComponentCache = mutable.Map.empty[Seq[Q], (Int, Seq[Pump])]
 
-  def checkPolynomialComponent(sc: Seq[Q]): (Int, Seq[Pump]) =
+  private[this] def checkPolynomialComponent(sc: Seq[Q]): (Int, Seq[Pump]) =
     checkPolynomialComponentCache.getOrElseUpdate(
       sc, {
         val (maxDegree, maxPumps) =
-          sccGraph.adj(sc).map(usc => checkPolynomialComponent(usc._2)).maxByOption(_._1).getOrElse((0, Seq.empty))
+          sccGraph
+            .neighbors(sc)
+            .map(usc => checkPolynomialComponent(usc._2))
+            .maxByOption(_._1)
+            .getOrElse((0, Seq.empty))
         if (maxDegree == 0) (if (isAtom(sc)) 0 else 1, Seq.empty)
         else if (isAtom(sc)) (maxDegree, maxPumps)
         else {
@@ -142,7 +142,7 @@ final class Checker[A](private[this] val r: Regex[A]) {
       }
     )
 
-  def checkPolynomialComponentBetween(source: Seq[Q], target: Seq[Q]): Option[Pump] = {
+  private[this] def checkPolynomialComponentBetween(source: Seq[Q], target: Seq[Q]): Option[Pump] = {
     val sourceEdges = sccPairEdges((source, source))
     val between = sccReachableMap(source) & sccReverseReachableMap(target)
     val betweenEdges = for (sc1 <- between; sc2 <- between) yield sccPairEdges((sc1, sc2))
@@ -183,8 +183,8 @@ final class Checker[A](private[this] val r: Regex[A]) {
       .nextOption()
   }
 
-  def witness(pumps: Seq[Pump]): Witness[Option[A]] = {
-    val (pumpPaths, qs) = pumps.foldLeft((Seq.empty[(Seq[Option[A]], Seq[Option[A]])], decomposedNFA.inits.toSet)) {
+  private[this] def witness(pumps: Seq[Pump]): Witness[Option[A]] = {
+    val (pumpPaths, qs) = pumps.foldLeft((Seq.empty[(Seq[Option[A]], Seq[Option[A]])], decomposedNFA.initSet.toSet)) {
       case ((pumpPaths, last), (q1, path, q2)) =>
         val prefix = graph.path(last, q1).get
         (pumpPaths :+ (prefix, path), Set(q2))
