@@ -46,7 +46,7 @@ final case class EpsNFA[A, Q](alphabet: Set[A], stateSet: Set[Q], init: Q, accep
               newStateSet.add(qs1)
             }
           case None => // nothing to do because of terminal state
-          case _    => throw new IllegalCallerException
+          case _    => throw new IllegalStateException
         }
       }
       for (a <- alphabet) {
