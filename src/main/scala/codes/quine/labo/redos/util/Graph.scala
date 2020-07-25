@@ -1,4 +1,5 @@
 package codes.quine.labo.redos
+package util
 
 import java.io.PrintWriter
 
@@ -10,11 +11,11 @@ object Graph {
     Graph(edges.groupMap(_._1)(vlv => (vlv._2, vlv._3)).withDefaultValue(Seq.empty))
 }
 
-final case class Graph[V, L](adj: Map[V, Seq[(L, V)]]) {
+final case class Graph[V, L] private (neighbors: Map[V, Seq[(L, V)]]) {
   def edges: Seq[(V, L, V)] =
-    adj.flatMap { case v1 -> lvs => lvs.map { case (l, v2) => (v1, l, v2) } }.toSeq
+    neighbors.flatMap { case v1 -> lvs => lvs.map { case (l, v2) => (v1, l, v2) } }.toSeq
 
-  def vertices: Seq[V] = adj.keys.toSeq
+  def vertices: Set[V] = neighbors.keySet | neighbors.values.flatMap(_.map(_._2)).toSet
 
   def render(name: String = "graph"): Unit = {
     val buf = new mutable.StringBuilder
@@ -49,7 +50,7 @@ final case class Graph[V, L](adj: Map[V, Seq[(L, V)]]) {
       stack.push(v1)
       inStack.add(v1)
 
-      for ((_, v2) <- adj.getOrElse(v1, Seq.empty)) {
+      for ((_, v2) <- neighbors.getOrElse(v1, Seq.empty)) {
         if (!visited.contains(v2)) {
           dfs(v2)
           lowlinks(v1) = Math.min(lowlinks(v1), lowlinks(v2))
@@ -72,7 +73,7 @@ final case class Graph[V, L](adj: Map[V, Seq[(L, V)]]) {
       }
     }
 
-    for (v <- adj.keySet) {
+    for (v <- vertices) {
       if (!visited.contains(v)) {
         dfs(v)
       }
@@ -93,8 +94,8 @@ final case class Graph[V, L](adj: Map[V, Seq[(L, V)]]) {
       if (v1 == target) {
         return Some(path)
       }
-      for ((a, v2) <- adj(v1); if !visited.contains(v2)) {
-        queue.enqueue((v2, path :+ a))
+      for ((l, v2) <- neighbors(v1); if !visited.contains(v2)) {
+        queue.enqueue((v2, path :+ l))
         visited.add(v2)
       }
     }
@@ -102,7 +103,7 @@ final case class Graph[V, L](adj: Map[V, Seq[(L, V)]]) {
     return None
   }
 
-  def reachableFrom(init: Set[V]): Graph[V, L] = {
+  def reachable(init: Set[V]): Graph[V, L] = {
     val queue = mutable.Queue.empty[V]
     val reachable = mutable.Set.empty[V]
     val newEdges = Map.newBuilder[V, Seq[(L, V)]]
@@ -112,7 +113,7 @@ final case class Graph[V, L](adj: Map[V, Seq[(L, V)]]) {
 
     while (queue.nonEmpty) {
       val v1 = queue.dequeue()
-      val es = adj.getOrElse(v1, Seq.empty)
+      val es = neighbors(v1)
       val vs = es.map(_._2)
       newEdges.addOne(v1 -> es)
       queue.enqueueAll(vs.filterNot(reachable.contains(_)))
@@ -125,7 +126,7 @@ final case class Graph[V, L](adj: Map[V, Seq[(L, V)]]) {
   def reachableMap: Map[V, Set[V]] = {
     val map = mutable.Map.empty[V, Set[V]]
     def dfs(v1: V): Set[V] =
-      map.getOrElseUpdate(v1, Set(v1) ++ adj(v1).flatMap { case (l, v) => dfs(v) }.toSet)
+      map.getOrElseUpdate(v1, Set(v1) ++ neighbors(v1).flatMap { case (l, v) => dfs(v) }.toSet)
     vertices.foreach(dfs(_))
     map.toMap
   }
