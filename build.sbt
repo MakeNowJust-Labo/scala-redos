@@ -19,7 +19,9 @@ lazy val root = project
       |import scala.collection.MultiDict
       |
       |import codes.quine.labo.redos._
-      |import codes.quine.labo.redos.Regex._
+      |import codes.quine.labo.redos.automaton._
+      |import codes.quine.labo.redos.regexp._
+      |import codes.quine.labo.redos.util._
       """.stripMargin,
     // Set URL mapping of scala standard API for Scaladoc.
     apiMappings ++= scalaInstance.value.libraryJars
