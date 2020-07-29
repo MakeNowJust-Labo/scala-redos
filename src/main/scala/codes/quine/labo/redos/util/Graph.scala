@@ -17,18 +17,6 @@ final case class Graph[V, L] private (neighbors: Map[V, Seq[(L, V)]]) {
 
   def vertices: Set[V] = neighbors.keySet | neighbors.values.flatMap(_.map(_._2)).toSet
 
-  def render(name: String = "graph"): Unit = {
-    val buf = new mutable.StringBuilder
-    def quote(x: Any): String = "\"" + x.toString() + "\""
-    buf ++= "digraph {\n"
-    for ((v1, l, v2) <- edges) {
-      buf ++= s"  ${quote(v1)} -> ${quote(v2)} [label=${quote(l)}];\n"
-    }
-    buf ++= "}\n"
-    new PrintWriter(s"$name.dot") { write(buf.result()); close() }
-    Process(Seq("dot", "-Tsvg", s"-o$name.svg", s"$name.dot")).!
-  }
-
   def reverse: Graph[V, L] =
     Graph.from(edges.map { case (v1, l, v2) => (v2, l, v1) })
 
