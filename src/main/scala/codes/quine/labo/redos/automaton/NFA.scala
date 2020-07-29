@@ -3,7 +3,7 @@ package automaton
 
 import scala.collection.mutable
 
-import util.Graph
+import util.{Graph, GraphRenderer}, GraphRenderer._
 
 final case class NFA[A, Q](
     alphabet: Set[A],
@@ -40,4 +40,9 @@ final case class NFA[A, Q](
 
     DFA(alphabet, newStateSet.toSet, initSet, newAcceptSet.result(), newDelta.result())
   }
+}
+
+object NFA {
+  implicit def GraphRendererInstance[A: AlphabetLabel, Q: StateLabel]: GraphRenderer[NFA[A, Q]] =
+    GraphRenderer.automaton(_.toGraph, _.initSet.contains(_), _.acceptSet.contains(_))
 }
