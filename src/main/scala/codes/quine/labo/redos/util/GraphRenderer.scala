@@ -3,6 +3,8 @@ package util
 
 import scala.util.chaining._
 
+import com.ibm.icu.lang.UCharacter
+
 import guru.nidi.graphviz.attribute.{Attributed, ForGraph, ForLink, ForNode, Label, Shape, Rank, Attributes}
 import guru.nidi.graphviz.engine.Graphviz
 import guru.nidi.graphviz.model
@@ -171,9 +173,9 @@ object GraphRenderer {
         def label(t: A): Label = f(t)
       }
 
-    implicit def InstanceForOptionChar: AlphabetLabel[Option[Char]] =
+    implicit def InstanceForOptionInt: AlphabetLabel[Option[Int]] =
       from {
-        case Some(c) => Label.of(String.valueOf(c))
+        case Some(c) => Label.of(String.valueOf(UCharacter.toChars(c)))
         case None    => Label.html("""<U>?</U>""")
       }
   }

@@ -36,6 +36,8 @@ lazy val root = project
       .map(_ -> url(s"http://www.scala-lang.org/api/${scalaVersion.value}/"))
       .toMap,
     // dependencies:
+    libraryDependencies += "com.ibm.icu" % "icu4j" % "67.1",
+    libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.2.2",
     libraryDependencies += "guru.nidi" % "graphviz-java" % "0.17.0",
     libraryDependencies += "org.scala-lang.modules" %% "scala-collection-contrib" % "0.2.1",
     // test dependencies:
