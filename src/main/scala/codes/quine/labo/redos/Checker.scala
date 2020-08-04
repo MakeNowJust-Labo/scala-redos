@@ -4,13 +4,12 @@ import scala.collection.MultiSet
 import scala.collection.mutable
 
 import automaton._
-import regexp.RegExp
 import util.Graph
 import Complexity._
 
 object Checker {
-  def check[A](r: RegExp[A]): Complexity[Option[A]] =
-    new Checker(r).check()
+  def check[A, Q](epsNFA: EpsNFA[A, Q]): Complexity[A] =
+    new Checker(epsNFA).check()
 
   def decompose[A, Q](nfa: OrderedNFA[A, Q], reverseDFA: DFA[A, Set[Q]]): MultiNFA[A, (Q, Set[Q])] = {
     val OrderedNFA(alphabet, stateSet, inits, acceptSet, delta) = nfa
@@ -36,8 +35,8 @@ object Checker {
   }
 }
 
-final class Checker[A](private[this] val r: RegExp[A]) {
-  private[this] val nfa = r.toEpsNFA.toOrderedNFA.rename
+final class Checker[A, Q](private[this] val epsNFA: EpsNFA[A, Q]) {
+  private[this] val nfa = epsNFA.toOrderedNFA.rename
   private[this] val reverseDFA = nfa.reverse.toDFA
   private[this] val decomposedNFA = Checker.decompose(nfa, reverseDFA)
 
@@ -63,12 +62,12 @@ final class Checker[A](private[this] val r: RegExp[A]) {
     .withDefaultValue(Map.empty.withDefaultValue(Seq.empty))
 
   private type Q = (Int, Set[Int])
-  private type Pump = (Q, Seq[Option[A]], Q)
+  private type Pump = (Q, Seq[A], Q)
 
   private[this] def isAtom(sc: Seq[Q]): Boolean =
     sc.size == 1 && !graph.neighbors(sc.head).exists(_._2 == sc.head)
 
-  def check(): Complexity[Option[A]] =
+  def check(): Complexity[A] =
     checkExponential() match {
       case Some(pump) => Exponential(witness(Seq(pump)))
       case None =>
@@ -183,8 +182,8 @@ final class Checker[A](private[this] val r: RegExp[A]) {
       .nextOption()
   }
 
-  private[this] def witness(pumps: Seq[Pump]): Witness[Option[A]] = {
-    val (pumpPaths, qs) = pumps.foldLeft((Seq.empty[(Seq[Option[A]], Seq[Option[A]])], decomposedNFA.initSet.toSet)) {
+  private[this] def witness(pumps: Seq[Pump]): Witness[A] = {
+    val (pumpPaths, qs) = pumps.foldLeft((Seq.empty[(Seq[A], Seq[A])], decomposedNFA.initSet.toSet)) {
       case ((pumpPaths, last), (q1, path, q2)) =>
         val prefix = graph.path(last, q1).get
         (pumpPaths :+ (prefix, path), Set(q2))
