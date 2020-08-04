@@ -54,7 +54,7 @@ object ParserSuite extends SimpleTestSuite {
       "^" -> LineBegin,
       "$" -> LineEnd,
       "\\b" -> WordBoundary(false),
-      "\\B" -> WordBoundary(true),
+      "\\B" -> WordBoundary(true)
     )
 
     for (source -> node <- testCases) {
@@ -73,7 +73,7 @@ object ParserSuite extends SimpleTestSuite {
       "\\p{ID_START}" -> UnicodeProperty(false, "ID_START"),
       "\\p{sc=Hira}" -> UnicodePropertyValue(false, "sc", "Hira"),
       "\\P{ID_START}" -> UnicodeProperty(true, "ID_START"),
-      "\\P{sc=Hira}" -> UnicodePropertyValue(true, "sc", "Hira"),
+      "\\P{sc=Hira}" -> UnicodePropertyValue(true, "sc", "Hira")
     )
 
     for (source -> node <- testCases) {

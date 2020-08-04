@@ -28,9 +28,15 @@ object CheckerSuite extends SimpleTestSuite {
     assertEquals(Checker.check(polynomialNFA1), Polynomial(2, Witness(Seq((Seq(), Seq(Some('a'.toInt)))), Seq(None))))
     assertEquals(
       Checker.check(polynomialNFA2),
-      Polynomial(3, Witness(Seq((Seq(), Seq(Some('a'.toInt))), (Seq(Some('b'.toInt)), Seq(Some('b'.toInt)))), Seq(None)))
+      Polynomial(
+        3,
+        Witness(Seq((Seq(), Seq(Some('a'.toInt))), (Seq(Some('b'.toInt)), Seq(Some('b'.toInt)))), Seq(None))
+      )
     )
-    assertEquals(Checker.check(exponentialNFA1), Exponential(Witness(Seq((Seq(Some('a'.toInt)), Seq(Some('a'.toInt)))), Seq(None))))
+    assertEquals(
+      Checker.check(exponentialNFA1),
+      Exponential(Witness(Seq((Seq(Some('a'.toInt)), Seq(Some('a'.toInt)))), Seq(None)))
+    )
     assertEquals(Checker.check(exponentialNFA2), Exponential(Witness(Seq((Seq(), Seq(Some('a'.toInt)))), Seq(None))))
   }
 }

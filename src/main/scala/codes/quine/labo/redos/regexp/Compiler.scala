@@ -24,9 +24,9 @@ object Compiler {
       hasLineBeginAtBegin <- hasLineBeginAtBegin(node)
       hasLineEndAtEnd <- hasLineEndAtEnd(node)
       (init, accept) = (hasLineBeginAtBegin, hasLineEndAtEnd) match {
-        case (true, true) => (init0, accept0)
-        case (true, false) => compiler.prefixMatch(init0, accept0)
-        case (false, true) => compiler.suffixMatch(init0, accept0)
+        case (true, true)   => (init0, accept0)
+        case (true, false)  => compiler.prefixMatch(init0, accept0)
+        case (false, true)  => compiler.suffixMatch(init0, accept0)
         case (false, false) => compiler.subMatch(init0, accept0)
       }
     } yield EpsNFA(compiler.alphabet, compiler.stateSet.toSet, init, accept, compiler.tau.toMap)
@@ -38,18 +38,18 @@ object Compiler {
         traverse(nodes)(alphabet(_, flagSet)).map(_.iterator.flatten.toSet)
       case Sequence(nodes) =>
         traverse(nodes)(alphabet(_, flagSet)).map(_.iterator.flatten.toSet)
-      case Capture(node) => alphabet(node, flagSet)
+      case Capture(node)         => alphabet(node, flagSet)
       case NamedCapture(_, node) => alphabet(node, flagSet)
-      case Group(node) => alphabet(node, flagSet)
-      case Star(_, node) => alphabet(node, flagSet)
-      case Question(_, node) => alphabet(node, flagSet)
-      case Plus(_, node) => alphabet(node, flagSet)
+      case Group(node)           => alphabet(node, flagSet)
+      case Star(_, node)         => alphabet(node, flagSet)
+      case Question(_, node)     => alphabet(node, flagSet)
+      case Plus(_, node)         => alphabet(node, flagSet)
       case Repeat(_, _, _, node) => alphabet(node, flagSet)
-      case Character(c) => Some(Set(Some(c)))
+      case Character(c)          => Some(Set(Some(c)))
       case Dot if flagSet.dotAll => Some(Set.empty)
-      case Dot => Some(Set(Some(0x0a), Some(0x0d)))
-      case LineBegin | LineEnd => Some(Set.empty)
-      case _ => None // unsupported
+      case Dot                   => Some(Set(Some(0x0a), Some(0x0d)))
+      case LineBegin | LineEnd   => Some(Set.empty)
+      case _                     => None // unsupported
     }
 
   private def hasLineBeginAtBegin(node: Node, isBegin: Boolean = true): Option[Boolean] =
@@ -62,17 +62,17 @@ object Compiler {
           x <- hasLineBeginAtBegin(node, isBegin)
           _ <- traverse(nodes)(hasLineBeginAtBegin(_, false))
         } yield x
-      case Capture(node) => hasLineBeginAtBegin(node, isBegin)
-      case NamedCapture(_, node) => hasLineBeginAtBegin(node, isBegin)
-      case Group(node) => hasLineBeginAtBegin(node, isBegin)
-      case Star(_, node) => hasLineBeginAtBegin(node, false)
-      case Question(_, node) => hasLineBeginAtBegin(node, false)
-      case Plus(_, node) => hasLineBeginAtBegin(node, false)
-      case Repeat(_, _, _, node) => hasLineBeginAtBegin(node, false)
-      case LineBegin if isBegin => Some(true)
-      case LineBegin => None // LineBegin at invalid place
+      case Capture(node)                => hasLineBeginAtBegin(node, isBegin)
+      case NamedCapture(_, node)        => hasLineBeginAtBegin(node, isBegin)
+      case Group(node)                  => hasLineBeginAtBegin(node, isBegin)
+      case Star(_, node)                => hasLineBeginAtBegin(node, false)
+      case Question(_, node)            => hasLineBeginAtBegin(node, false)
+      case Plus(_, node)                => hasLineBeginAtBegin(node, false)
+      case Repeat(_, _, _, node)        => hasLineBeginAtBegin(node, false)
+      case LineBegin if isBegin         => Some(true)
+      case LineBegin                    => None // LineBegin at invalid place
       case LineEnd | _: Character | Dot => Some(false)
-      case _ => None // unsupported
+      case _                            => None // unsupported
     }
 
   private def hasLineEndAtEnd(node: Node, isEnd: Boolean = true): Option[Boolean] =
@@ -85,17 +85,17 @@ object Compiler {
           _ <- traverse(nodes)(hasLineEndAtEnd(_, false))
           x <- hasLineEndAtEnd(node, isEnd)
         } yield x
-      case Capture(node) => hasLineEndAtEnd(node, isEnd)
-      case NamedCapture(_, node) => hasLineEndAtEnd(node, isEnd)
-      case Group(node) => hasLineEndAtEnd(node, isEnd)
-      case Star(_, node) => hasLineEndAtEnd(node, false)
-      case Question(_, node) => hasLineEndAtEnd(node, false)
-      case Plus(_, node) => hasLineEndAtEnd(node, false)
-      case Repeat(_, _, _, node) => hasLineEndAtEnd(node, false)
-      case LineEnd if isEnd => Some(true)
-      case LineEnd => None // LineEnd at invalid place
+      case Capture(node)                  => hasLineEndAtEnd(node, isEnd)
+      case NamedCapture(_, node)          => hasLineEndAtEnd(node, isEnd)
+      case Group(node)                    => hasLineEndAtEnd(node, isEnd)
+      case Star(_, node)                  => hasLineEndAtEnd(node, false)
+      case Question(_, node)              => hasLineEndAtEnd(node, false)
+      case Plus(_, node)                  => hasLineEndAtEnd(node, false)
+      case Repeat(_, _, _, node)          => hasLineEndAtEnd(node, false)
+      case LineEnd if isEnd               => Some(true)
+      case LineEnd                        => None // LineEnd at invalid place
       case LineBegin | _: Character | Dot => Some(false)
-      case _ => None // unsupported
+      case _                              => None // unsupported
     }
 
   def traverse[A, B](xs: Seq[A])(f: A => Option[B]): Option[Seq[B]] = {
@@ -103,7 +103,7 @@ object Compiler {
     for (x <- xs) {
       f(x) match {
         case Some(y) => ys.addOne(y)
-        case None => return None
+        case None    => return None
       }
     }
     Some(ys.result())
@@ -138,16 +138,19 @@ final private class Compiler(val flagSet: Pattern.FlagSet, val alphabet: Set[Opt
       case Sequence(nodes) =>
         for {
           ias <- traverse(nodes)(compile(_))
-        } yield ias.reduceLeftOption[(Int, Int)] { case ((i1, a1), (i2, a2)) =>
-          tau(a1) = Eps(i2)
-          (i1, a2)
-        }.getOrElse {
-          val q = nextState()
-          (q, q)
-        }
-      case Capture(node) => compile(node)
+        } yield ias
+          .reduceLeftOption[(Int, Int)] {
+            case ((i1, a1), (i2, a2)) =>
+              tau(a1) = Eps(i2)
+              (i1, a2)
+          }
+          .getOrElse {
+            val q = nextState()
+            (q, q)
+          }
+      case Capture(node)         => compile(node)
       case NamedCapture(_, node) => compile(node)
-      case Group(node) => compile(node)
+      case Group(node)           => compile(node)
       case Star(nonGreedy, node) =>
         for {
           (i, a) <- compile(node)
