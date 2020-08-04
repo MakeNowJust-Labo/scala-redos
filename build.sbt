@@ -37,7 +37,7 @@ lazy val root = project
       .toMap,
     // dependencies:
     libraryDependencies += "com.ibm.icu" % "icu4j" % "67.1",
-    libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.2.2",
+    libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.2.4",
     libraryDependencies += "guru.nidi" % "graphviz-java" % "0.17.0",
     libraryDependencies += "org.scala-lang.modules" %% "scala-collection-contrib" % "0.2.1",
     // test dependencies:
