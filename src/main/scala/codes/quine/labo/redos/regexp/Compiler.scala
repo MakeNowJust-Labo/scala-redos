@@ -2,7 +2,7 @@ package codes.quine.labo.redos
 package regexp
 
 import scala.collection.mutable
-import scala.util.Try
+import scala.util.{Try, Success, Failure}
 
 import com.ibm.icu.lang.{UCharacter, UProperty}
 import com.ibm.icu.text.{UnicodeSet, UnicodeSetIterator}
@@ -12,10 +12,10 @@ import Compiler.traverse
 import Pattern._
 
 object Compiler {
-  def compile(pattern: Pattern): Option[EpsNFA[Option[Int], Int]] = {
+  def compile(pattern: Pattern): Try[EpsNFA[Option[Int], Int]] = {
     val Pattern(flagSet, node) = pattern
     if (flagSet.ignoreCase || flagSet.multiline || flagSet.unicode) {
-      return None // unsupported
+      return Failure(new UnsupportedRegExpException("Unsupported flag"))
     }
     for {
       alphabet <- alphabet(node, flagSet)
@@ -32,7 +32,7 @@ object Compiler {
     } yield EpsNFA(compiler.alphabet, compiler.stateSet.toSet, init, accept, compiler.tau.toMap)
   }
 
-  private def alphabet(node: Node, flagSet: FlagSet): Option[Set[Option[Int]]] =
+  private def alphabet(node: Node, flagSet: FlagSet): Try[Set[Option[Int]]] =
     node match {
       case Disjunction(nodes) =>
         traverse(nodes)(alphabet(_, flagSet)).map(_.iterator.flatten.toSet)
@@ -45,68 +45,72 @@ object Compiler {
       case Question(_, node)     => alphabet(node, flagSet)
       case Plus(_, node)         => alphabet(node, flagSet)
       case Repeat(_, _, _, node) => alphabet(node, flagSet)
-      case Character(c)          => Some(Set(Some(c)))
-      case Dot if flagSet.dotAll => Some(Set.empty)
-      case Dot                   => Some(Set(Some(0x0a), Some(0x0d)))
-      case LineBegin | LineEnd   => Some(Set.empty)
-      case _                     => None // unsupported
+      case Character(c)          => Success(Set(Some(c)))
+      case Dot if flagSet.dotAll => Success(Set.empty)
+      case Dot                   => Success(Set(Some(0x0a), Some(0x0d)))
+      case LineBegin | LineEnd   => Success(Set.empty)
+      case _                     => Failure(new UnsupportedRegExpException("Unsupported syntax"))
     }
 
-  private def hasLineBeginAtBegin(node: Node, isBegin: Boolean = true): Option[Boolean] =
+  private def hasLineBeginAtBegin(node: Node, isBegin: Boolean = true): Try[Boolean] =
     node match {
       case Disjunction(nodes) =>
         traverse(nodes)(hasLineBeginAtBegin(_, isBegin)).map(_.forall(identity(_)))
-      case Sequence(Seq()) => Some(false)
+      case Sequence(Seq()) => Success(false)
       case Sequence(node +: nodes) =>
         for {
           x <- hasLineBeginAtBegin(node, isBegin)
           _ <- traverse(nodes)(hasLineBeginAtBegin(_, false))
         } yield x
-      case Capture(node)                => hasLineBeginAtBegin(node, isBegin)
-      case NamedCapture(_, node)        => hasLineBeginAtBegin(node, isBegin)
-      case Group(node)                  => hasLineBeginAtBegin(node, isBegin)
-      case Star(_, node)                => hasLineBeginAtBegin(node, false)
-      case Question(_, node)            => hasLineBeginAtBegin(node, false)
-      case Plus(_, node)                => hasLineBeginAtBegin(node, false)
-      case Repeat(_, _, _, node)        => hasLineBeginAtBegin(node, false)
-      case LineBegin if isBegin         => Some(true)
-      case LineBegin                    => None // LineBegin at invalid place
-      case LineEnd | _: Character | Dot => Some(false)
-      case _                            => None // unsupported
+      case Capture(node)         => hasLineBeginAtBegin(node, isBegin)
+      case NamedCapture(_, node) => hasLineBeginAtBegin(node, isBegin)
+      case Group(node)           => hasLineBeginAtBegin(node, isBegin)
+      case Star(_, node)         => hasLineBeginAtBegin(node, false)
+      case Question(_, node)     => hasLineBeginAtBegin(node, false)
+      case Plus(_, node)         => hasLineBeginAtBegin(node, false)
+      case Repeat(_, _, _, node) => hasLineBeginAtBegin(node, false)
+      case LineBegin if isBegin  => Success(true)
+      case LineBegin =>
+        Failure(new UnsupportedRegExpException("A line begin assertion is not placed at the begin of pattern"))
+      case LineEnd | _: Character | Dot => Success(false)
+      case _                            => Failure(new UnsupportedRegExpException("Unsupported syntax"))
     }
 
-  private def hasLineEndAtEnd(node: Node, isEnd: Boolean = true): Option[Boolean] =
+  private def hasLineEndAtEnd(node: Node, isEnd: Boolean = true): Try[Boolean] =
     node match {
       case Disjunction(nodes) =>
         traverse(nodes)(hasLineEndAtEnd(_, isEnd)).map(_.forall(identity(_)))
-      case Sequence(Seq()) => Some(false)
+      case Sequence(Seq()) => Success(false)
       case Sequence(nodes :+ node) =>
         for {
           _ <- traverse(nodes)(hasLineEndAtEnd(_, false))
           x <- hasLineEndAtEnd(node, isEnd)
         } yield x
-      case Capture(node)                  => hasLineEndAtEnd(node, isEnd)
-      case NamedCapture(_, node)          => hasLineEndAtEnd(node, isEnd)
-      case Group(node)                    => hasLineEndAtEnd(node, isEnd)
-      case Star(_, node)                  => hasLineEndAtEnd(node, false)
-      case Question(_, node)              => hasLineEndAtEnd(node, false)
-      case Plus(_, node)                  => hasLineEndAtEnd(node, false)
-      case Repeat(_, _, _, node)          => hasLineEndAtEnd(node, false)
-      case LineEnd if isEnd               => Some(true)
-      case LineEnd                        => None // LineEnd at invalid place
-      case LineBegin | _: Character | Dot => Some(false)
-      case _                              => None // unsupported
+      case Capture(node)         => hasLineEndAtEnd(node, isEnd)
+      case NamedCapture(_, node) => hasLineEndAtEnd(node, isEnd)
+      case Group(node)           => hasLineEndAtEnd(node, isEnd)
+      case Star(_, node)         => hasLineEndAtEnd(node, false)
+      case Question(_, node)     => hasLineEndAtEnd(node, false)
+      case Plus(_, node)         => hasLineEndAtEnd(node, false)
+      case Repeat(_, _, _, node) => hasLineEndAtEnd(node, false)
+      case LineEnd if isEnd      => Success(true)
+      case LineEnd =>
+        Failure(
+          new UnsupportedRegExpException("A line end assertion is not placed at the end of pattern")
+        )
+      case LineBegin | _: Character | Dot => Success(false)
+      case _                              => Failure(new UnsupportedRegExpException("Unsupported syntax"))
     }
 
-  def traverse[A, B](xs: Seq[A])(f: A => Option[B]): Option[Seq[B]] = {
+  def traverse[A, B](xs: Seq[A])(f: A => Try[B]): Try[Seq[B]] = {
     val ys = Seq.newBuilder[B]
     for (x <- xs) {
       f(x) match {
-        case Some(y) => ys.addOne(y)
-        case None    => return None
+        case Success(y)  => ys.addOne(y)
+        case Failure(ex) => return Failure(ex)
       }
     }
-    Some(ys.result())
+    Success(ys.result())
   }
 }
 
@@ -120,7 +124,7 @@ final private class Compiler(val flagSet: Pattern.FlagSet, val alphabet: Set[Opt
     state
   }
 
-  def compile(node: Node): Option[(Int, Int)] =
+  def compile(node: Node): Try[(Int, Int)] =
     node match {
       case Disjunction(nodes) =>
         for {
@@ -179,23 +183,23 @@ final private class Compiler(val flagSet: Pattern.FlagSet, val alphabet: Set[Opt
       case Repeat(nonGreedy, min, Some(None), node) =>
         compile(Sequence(Seq.fill(min)(node) :+ Star(nonGreedy, node)))
       case Repeat(_, min, Some(Some(max)), _) if min > max =>
-        None
+        Failure(new InvalidRegExpException("Invalid repetition"))
       case Repeat(nonGreedy, min, Some(Some(max)), node) =>
         compile(Sequence(Seq.fill(min)(node) ++ Seq.fill(max - min)(Question(nonGreedy, node))))
       case LineBegin | LineEnd =>
         val q = nextState()
-        Some((q, q))
+        Success((q, q))
       case Character(c) =>
         val init = nextState()
         val accept = nextState()
         tau(init) = Consume(Set(Some(c)), accept)
-        Some((init, accept))
+        Success((init, accept))
       case Dot =>
         val init = nextState()
         val accept = nextState()
         tau(init) = Consume(if (flagSet.dotAll) alphabet else alphabet.diff(Set(Some(0x0a), Some(0x0d))), accept)
-        Some((init, accept))
-      case _ => None // unsupported
+        Success((init, accept))
+      case _ => Failure(new UnsupportedRegExpException("Unsupported syntax"))
     }
 
   def suffixMatch(i: Int, a: Int): (Int, Int) = {
