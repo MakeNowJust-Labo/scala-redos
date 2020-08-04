@@ -1,5 +1,7 @@
 package codes.quine.labo.redos
 
+import scala.util.{Try, Success}
+
 import minitest.SimpleTestSuite
 
 import Complexity._
@@ -7,20 +9,20 @@ import automaton.EpsNFA
 import regexp.{Parser, Compiler}
 
 object CheckerSuite extends SimpleTestSuite {
-  def parse(s: String): Option[EpsNFA[Option[Int], Int]] =
+  def parse(s: String): Try[EpsNFA[Option[Int], Int]] =
     for {
       pattern <- Parser.parse(s, "")
       epsNFA <- Compiler.compile(pattern)
     } yield epsNFA
 
   test("Checker.check") {
-    val Some(constantNFA) = parse("^a$")
-    val Some(linearNFA1) = parse("^a*$")
-    val Some(linearNFA2) = parse("^(a|a)*")
-    val Some(polynomialNFA1) = parse("^a*aa*$")
-    val Some(polynomialNFA2) = parse("^a*aa*b*bb*$")
-    val Some(exponentialNFA1) = parse("^(a*)*$")
-    val Some(exponentialNFA2) = parse("^(a|a)*$")
+    val Success(constantNFA) = parse("^a$")
+    val Success(linearNFA1) = parse("^a*$")
+    val Success(linearNFA2) = parse("^(a|a)*")
+    val Success(polynomialNFA1) = parse("^a*aa*$")
+    val Success(polynomialNFA2) = parse("^a*aa*b*bb*$")
+    val Success(exponentialNFA1) = parse("^(a*)*$")
+    val Success(exponentialNFA2) = parse("^(a|a)*$")
 
     assertEquals(Checker.check(constantNFA), Constant)
     assertEquals(Checker.check(linearNFA1), Linear)

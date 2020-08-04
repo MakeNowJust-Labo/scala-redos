@@ -59,7 +59,7 @@ object ParserSuite extends SimpleTestSuite {
 
     for (source -> node <- testCases) {
       val result = Parser.parse(source, "")
-      assert(result.isDefined)
+      assert(result.isSuccess)
       assertEquals(result.get.root, node)
       val source2 = result.get.toString
       val result2 = Parser.parse(source2.slice(1, source2.length - 1), "")
@@ -78,7 +78,7 @@ object ParserSuite extends SimpleTestSuite {
 
     for (source -> node <- testCases) {
       val result = Parser.parse(source, "u")
-      assert(result.isDefined)
+      assert(result.isSuccess)
       assertEquals(result.get.root, node)
       val source2 = result.get.toString
       val result2 = Parser.parse(source2.slice(1, source2.length - 2), "u")

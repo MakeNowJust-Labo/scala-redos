@@ -16,6 +16,7 @@ lazy val root = project
     version := "0.1.0-SNAPSHOT",
     console / initialCommands := """
       |import scala.util.chaining._
+      |import scala.util.{Try, Success, Failure}
       |import scala.collection.MultiDict
       |
       |import codes.quine.labo.redos._

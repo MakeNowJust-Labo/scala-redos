@@ -2,6 +2,7 @@ package codes.quine.labo.redos
 package regexp
 
 import scala.annotation.switch
+import scala.util.{Try, Success, Failure}
 
 import com.ibm.icu.lang.{UCharacter, UProperty}
 import com.ibm.icu.text.UnicodeSet
@@ -19,15 +20,18 @@ object Parser {
     * @param source a source string
     * @param flags a flag set string
     * @param additional whether additional features are enabled or not
-    * @return Some with parsed RegExp pattern if parsing is succeded, or None
+    * @return Success with parsed RegExp pattern if parsing is succeded, or Failure
     */
-  def parse(source: String, flags: String, additional: Boolean = true): Option[Pattern] =
+  def parse(source: String, flags: String, additional: Boolean = true): Try[Pattern] =
     for {
       flagSet <- parseFlagSet(flags)
       (hasNamedCapture, captures) = preprocessParens(source)
       result = fastparse.parse(source, new Parser(flagSet.unicode, additional, hasNamedCapture, captures).Source(_))
-      if result.isSuccess
-    } yield Pattern(flagSet, result.get.value)
+      root <- result match {
+        case Parsed.Success(root, _) => Success(root)
+        case fail: Parsed.Failure    => Failure(new InvalidRegExpException(s"Parsing failure at ${fail.index}"))
+      }
+    } yield Pattern(flagSet, root)
 
   private val ID_START = new UnicodeSet()
     .applyIntPropertyValue(UProperty.ID_START, 1)
@@ -41,14 +45,15 @@ object Parser {
     * Parse a flag set string.
     *
     * @param s a flag set string
-    * @return Some with parsed flag set if parsing is succeeded, or None
+    * @return Success with parsed flag set if parsing is succeeded, or Failure
     */
-  private def parseFlagSet(s: String): Option[FlagSet] = {
+  private def parseFlagSet(s: String): Try[FlagSet] = {
     val cs = s.toList
     // A flag set accept neither duplicated character nor unknown character.
-    if (cs.distinct != cs || !cs.forall("gimsuy".contains(_))) None
+    if (cs.distinct != cs) Failure(new InvalidRegExpException("Duplicated flag"))
+    else if (!cs.forall("gimsuy".contains(_))) Failure(new InvalidRegExpException("Unknown flag"))
     else
-      Option(
+      Success(
         FlagSet(
           cs.contains('g'),
           cs.contains('i'),
