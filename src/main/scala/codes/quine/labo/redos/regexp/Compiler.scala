@@ -160,10 +160,11 @@ final private class Compiler(val flagSet: Pattern.FlagSet, val alphabet: Set[Opt
           (i, a) <- compile(node)
         } yield {
           val init = nextState()
+          val q = nextState()
           val accept = nextState()
-          val loop = if (nonGreedy) Branch(accept, i) else Branch(i, accept)
-          tau(init) = loop
-          tau(a) = loop
+          tau(init) = Eps(q)
+          tau(q) = if (nonGreedy) Branch(accept, i) else Branch(i, accept)
+          tau(a) = Eps(q)
           (init, accept)
         }
       case Question(nonGreedy, node) =>
