@@ -55,12 +55,18 @@ object Compiler {
   private def hasLineBeginAtBegin(node: Node, isBegin: Boolean = true): Try[Boolean] =
     node match {
       case Disjunction(nodes) =>
-        traverse(nodes)(hasLineBeginAtBegin(_, isBegin)).map(_.forall(identity(_)))
+        for {
+          xs <- traverse(nodes)(hasLineBeginAtBegin(_, isBegin))
+          x <-
+            if (xs.forall(identity(_))) Success(true)
+            else if (xs.forall(!identity(_))) Success(false)
+            else Failure(new UnsupportedRegExpException("A line begin assertion is mixed with sub matching part."))
+        } yield x
       case Sequence(Seq()) => Success(false)
       case Sequence(node +: nodes) =>
         for {
           x <- hasLineBeginAtBegin(node, isBegin)
-          _ <- traverse(nodes)(hasLineBeginAtBegin(_, false))
+          _ <- traverse(nodes)(hasLineBeginAtBegin(_, false)).filter(_.forall(!identity(_)))
         } yield x
       case Capture(node)         => hasLineBeginAtBegin(node, isBegin)
       case NamedCapture(_, node) => hasLineBeginAtBegin(node, isBegin)
@@ -79,11 +85,17 @@ object Compiler {
   private def hasLineEndAtEnd(node: Node, isEnd: Boolean = true): Try[Boolean] =
     node match {
       case Disjunction(nodes) =>
-        traverse(nodes)(hasLineEndAtEnd(_, isEnd)).map(_.forall(identity(_)))
+        for {
+          xs <- traverse(nodes)(hasLineEndAtEnd(_, isEnd))
+          x <-
+            if (xs.forall(identity(_))) Success(true)
+            else if (xs.forall(!identity(_))) Success(false)
+            else Failure(new UnsupportedRegExpException("A line end assertion is mixed with sub matching part."))
+        } yield x
       case Sequence(Seq()) => Success(false)
       case Sequence(nodes :+ node) =>
         for {
-          _ <- traverse(nodes)(hasLineEndAtEnd(_, false))
+          _ <- traverse(nodes)(hasLineEndAtEnd(_, false)).filter(_.forall(!identity(_)))
           x <- hasLineEndAtEnd(node, isEnd)
         } yield x
       case Capture(node)         => hasLineEndAtEnd(node, isEnd)
@@ -218,8 +230,8 @@ final private class Compiler(val flagSet: Pattern.FlagSet, val alphabet: Set[Opt
     (i, accept)
   }
 
-  def subMatch(i: Int, a: Int): (Int, Int) =
-    prefixMatch(i, a) match {
-      case (i1, a1) => suffixMatch(i1, a1)
-    }
+  def subMatch(i: Int, a: Int): (Int, Int) = {
+    val (i1, a1) = prefixMatch(i, a)
+    suffixMatch(i1, a1)
+  }
 }
