@@ -125,8 +125,9 @@ object GraphRenderer {
     for (((v1, l, v2), i) <- graph.edges.zipWithIndex) {
       val source = Factory.node(T.vertexLabel(t, v1))
       val target = Factory.node(T.vertexLabel(t, v2))
-      // An `id` attribute for each edges is needed to distinct edges having the same attributes.
-      val to = Factory.to(target).`with`(Attributes.attr("id", f"edge$i%03d")).pipe(T.edgeAttributes(t, v1, l, v2, _))
+      // A `class` attribute for each edges is needed to distinct edges having the same attributes.
+      val to =
+        Factory.to(target).`with`(Attributes.attr("class", f"edge$i%03d")).pipe(T.edgeAttributes(t, v1, l, v2, _))
       graphviz.add(source.link(to))
     }
 
