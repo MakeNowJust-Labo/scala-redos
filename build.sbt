@@ -39,6 +39,7 @@ lazy val root = project
     // dependencies:
     libraryDependencies += "com.ibm.icu" % "icu4j" % "67.1",
     libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.2.4",
+    libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.30",
     libraryDependencies += "guru.nidi" % "graphviz-java" % "0.17.0",
     libraryDependencies += "org.scala-lang.modules" %% "scala-collection-contrib" % "0.2.1",
     // test dependencies:
