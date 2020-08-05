@@ -7,17 +7,17 @@ import EpsNFA._
 
 final case class EpsNFA[A, Q](alphabet: Set[A], stateSet: Set[Q], init: Q, accept: Q, tau: Map[Q, Transition[A, Q]]) {
   def toOrderedNFA: OrderedNFA[A, Seq[Q]] = {
-    def buildClosure(q: Q, visited: Set[Q]): Seq[Q] =
-      if (visited.contains(q)) Seq.empty
+    def buildClosure(q: Q, path: Seq[Q]): Seq[Q] =
+      if (path.lastOption.exists(p => path.containsSlice(Seq(p, q)))) Seq.empty
       else
         tau.get(q) match {
-          case Some(Eps(q1))        => buildClosure(q1, visited + q)
-          case Some(Branch(q1, q2)) => buildClosure(q1, visited + q) ++ buildClosure(q2, visited + q)
+          case Some(Eps(q1))        => buildClosure(q1, path :+ q)
+          case Some(Branch(q1, q2)) => buildClosure(q1, path :+ q) ++ buildClosure(q2, path :+ q)
           case Some(Consume(_, _))  => Seq(q)
           case None                 => Seq(q)
         }
     val closureCache = mutable.Map.empty[Q, Seq[Q]]
-    def closure(q: Q): Seq[Q] = closureCache.getOrElseUpdate(q, buildClosure(q, Set.empty))
+    def closure(q: Q): Seq[Q] = closureCache.getOrElseUpdate(q, buildClosure(q, Seq.empty))
 
     val queue = mutable.Queue.empty[Seq[Q]]
     val newStateSet = mutable.Set.empty[Seq[Q]]
