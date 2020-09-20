@@ -3,6 +3,8 @@ package codes.quine.labo.redos
 import scala.collection.MultiSet
 import scala.collection.mutable
 
+import com.github.ghik.silencer.silent
+
 import automaton._
 import util.Graph
 import Complexity._
@@ -12,7 +14,7 @@ object Checker {
     new Checker(epsNFA).check()
 
   def decompose[A, Q](nfa: OrderedNFA[A, Q], reverseDFA: DFA[A, Set[Q]]): MultiNFA[A, (Q, Set[Q])] = {
-    val OrderedNFA(alphabet, stateSet, inits, acceptSet, delta) = nfa
+    val OrderedNFA(alphabet, stateSet, inits, _, delta) = nfa
 
     val reverseDelta = reverseDFA.delta.groupMap(_._1._2) { case (p2, _) -> p1 => (p1, p2) }.withDefaultValue(Seq.empty)
 
@@ -55,7 +57,7 @@ final class Checker[A, Q](private[this] val epsNFA: EpsNFA[A, Q]) {
   private[this] val sccReachableMap = sccGraph.reachableMap
   private[this] val sccReverseReachableMap = sccGraph.reverse.reachableMap
   private[this] val sccPairEdges = graph.edges
-    .groupMap { case (q1, a, q2) => (sccMap(q1), sccMap(q2)) } { case (q1, a, q2) => a -> (q1, q2) }
+    .groupMap { case (q1, _, q2) => (sccMap(q1), sccMap(q2)) } { case (q1, a, q2) => a -> (q1, q2) }
     .view
     .mapValues(_.groupMap(_._1)(_._2).withDefaultValue(Seq.empty))
     .toMap
@@ -82,6 +84,9 @@ final class Checker[A, Q](private[this] val epsNFA: EpsNFA[A, Q]) {
     scc.iterator.filterNot(isAtom(_)).flatMap(checkExponentialComponent(_)).nextOption()
   }
 
+  @silent(
+    "never used"
+  ) // TODO: `p1` is reported as unused here, however it is used really. Is this scalafix (or scala compiler) bug?
   private[this] def checkExponentialComponent(sc: Seq[Q]): Option[Pump] = {
     val edges = sccPairEdges((sc, sc))
 

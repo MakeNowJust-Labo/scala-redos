@@ -3,6 +3,7 @@ package util
 
 import scala.util.chaining._
 
+import com.github.ghik.silencer.silent
 import com.ibm.icu.lang.UCharacter
 import guru.nidi.graphviz.attribute.Attributed
 import guru.nidi.graphviz.attribute.Attributes
@@ -23,6 +24,7 @@ import guru.nidi.graphviz.model.Node
   *
   * @tparam T data type
   */
+@silent("never used")
 trait GraphRenderer[T] {
 
   /** A type of vertex. */
@@ -266,7 +268,7 @@ object GraphRenderer {
       override def vertexAttributes(fa: FA[A, Q], q: Option[Q], node: Node): Node =
         q match {
           case Some(q) if isAccept(fa, q) => node.`with`(Shape.DOUBLE_CIRCLE)
-          case Some(q)                    => node.`with`(Shape.CIRCLE)
+          case Some(_)                    => node.`with`(Shape.CIRCLE)
           case None                       => node.`with`(Shape.POINT)
         }
       override def edgeAttributes(fa: FA[A, Q], q1: Option[Q], a: Option[A], q2: Option[Q], link: Link): Link =

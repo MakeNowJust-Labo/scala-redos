@@ -206,7 +206,7 @@ final private class Parser(
         case (Left(c), false)                              => Pass(Pattern.Character(c))
         case (Right(node), false)                          => Pass(node)
         case (Right(node), true) if additional && !unicode => Pass(node)
-        case (Right(node), true)                           => Fail
+        case (Right(_), true)                              => Fail
         case (Left(c), true) if additional && !unicode =>
           &("-" ~ EscapeClass) ~ Pass(Pattern.Character(c)) |
             ("-" ~ ClassCharacter).map(Pattern.ClassRange(c, _))

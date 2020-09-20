@@ -110,7 +110,7 @@ final case class Graph[V, L] private (neighbors: Map[V, Seq[(L, V)]]) {
   def reachableMap: Map[V, Set[V]] = {
     val map = mutable.Map.empty[V, Set[V]]
     def dfs(v1: V): Set[V] =
-      map.getOrElseUpdate(v1, Set(v1) ++ neighbors(v1).flatMap { case (l, v) => dfs(v) }.toSet)
+      map.getOrElseUpdate(v1, Set(v1) ++ neighbors(v1).flatMap { case (_, v) => dfs(v) }.toSet)
     vertices.foreach(dfs(_))
     map.toMap
   }
