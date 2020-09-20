@@ -155,10 +155,9 @@ final private class Compiler(val flagSet: Pattern.FlagSet, val alphabet: Set[Opt
         for {
           ias <- traverse(nodes)(compile(_))
         } yield ias
-          .reduceLeftOption[(Int, Int)] {
-            case ((i1, a1), (i2, a2)) =>
-              tau(a1) = Eps(i2)
-              (i1, a2)
+          .reduceLeftOption[(Int, Int)] { case ((i1, a1), (i2, a2)) =>
+            tau(a1) = Eps(i2)
+            (i1, a2)
           }
           .getOrElse {
             val q = nextState()

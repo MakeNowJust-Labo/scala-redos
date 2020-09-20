@@ -167,16 +167,14 @@ final class Checker[A, Q](private[this] val epsNFA: EpsNFA[A, Q]) {
       .flatMap(sc =>
         sc.collect {
           case (q1, q2, q3) if q1 == q2 && q2 != q3 => (q1, q3)
-        }.find {
-          case (q11, q12) =>
-            sc.exists {
-              case (q21, q22, q23) => q21 == q11 && q22 == q12 && q23 == q12
-            }
-        }.flatMap {
-          case (q1, q2) =>
-            for {
-              path <- g3.path(Set((q1, q1, q2)), (q1, q2, q2))
-            } yield (q1, path, q2)
+        }.find { case (q11, q12) =>
+          sc.exists { case (q21, q22, q23) =>
+            q21 == q11 && q22 == q12 && q23 == q12
+          }
+        }.flatMap { case (q1, q2) =>
+          for {
+            path <- g3.path(Set((q1, q1, q2)), (q1, q2, q2))
+          } yield (q1, path, q2)
         }
       )
       .nextOption()
