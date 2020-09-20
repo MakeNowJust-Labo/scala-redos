@@ -1,9 +1,8 @@
 package codes.quine.labo.redos
 package util
 
-import minitest.SimpleTestSuite
-
 import guru.nidi.graphviz.engine.Format
+import minitest.SimpleTestSuite
 
 object GraphRendererSuite extends SimpleTestSuite {
   test("GraphRenderer.graphviz (with GraphRenderer.InstanceForGraph)") {

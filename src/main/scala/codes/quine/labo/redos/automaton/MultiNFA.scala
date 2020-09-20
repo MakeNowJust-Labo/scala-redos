@@ -3,7 +3,8 @@ package automaton
 
 import scala.collection.MultiSet
 
-import util.{Graph, GraphRenderer}, GraphRenderer._
+import util.{Graph, GraphRenderer}
+import GraphRenderer._
 
 final case class MultiNFA[A, Q](
     alphabet: Set[A],

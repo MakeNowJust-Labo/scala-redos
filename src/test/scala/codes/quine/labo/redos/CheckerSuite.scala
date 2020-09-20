@@ -1,6 +1,7 @@
 package codes.quine.labo.redos
 
-import scala.util.{Try, Success}
+import scala.util.Success
+import scala.util.Try
 
 import minitest.SimpleTestSuite
 

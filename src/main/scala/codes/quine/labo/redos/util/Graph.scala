@@ -1,10 +1,6 @@
 package codes.quine.labo.redos
 package util
-
-import java.io.PrintWriter
-
 import scala.collection.mutable
-import scala.sys.process.Process
 
 object Graph {
   def from[V, L](edges: Seq[(V, L, V)]): Graph[V, L] =

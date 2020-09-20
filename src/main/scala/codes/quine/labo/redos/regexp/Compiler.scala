@@ -2,12 +2,12 @@ package codes.quine.labo.redos
 package regexp
 
 import scala.collection.mutable
-import scala.util.{Try, Success, Failure}
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
-import com.ibm.icu.lang.{UCharacter, UProperty}
-import com.ibm.icu.text.{UnicodeSet, UnicodeSetIterator}
-
-import automaton.EpsNFA, EpsNFA._
+import automaton.EpsNFA
+import EpsNFA._
 import Compiler.traverse
 import Pattern._
 
@@ -127,8 +127,8 @@ object Compiler {
 }
 
 final private class Compiler(val flagSet: Pattern.FlagSet, val alphabet: Set[Option[Int]]) {
-  val stateSet = mutable.Set.empty[Int]
-  val tau = mutable.Map.empty[Int, Transition[Option[Int], Int]]
+  val stateSet: mutable.Set[Int] = mutable.Set.empty[Int]
+  val tau: mutable.Map[Int, Transition[Option[Int], Int]] = mutable.Map.empty[Int, Transition[Option[Int], Int]]
 
   private def nextState(): Int = {
     val state = stateSet.size

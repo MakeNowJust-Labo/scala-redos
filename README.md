@@ -9,7 +9,7 @@
 This tool supports to analyze a subset of ECMA-262 (JavaScript) regular expression.
 Detailed supported features are listed on the below table.
 
-Meanings of status symbol:
+Meanings of status symbols:
 
   - `○`: this feature is completely supported.
   - `△`: this feature is supported, but partially.
@@ -50,4 +50,4 @@ Meanings of status symbol:
 
 (2): An ignore-case flag is not yet supported.
 
-(3): Currently it is only supported when it is placed at the begin/end of pattern.
+(3): Currently it is only supported when it is placed at the begin/end of patterns.

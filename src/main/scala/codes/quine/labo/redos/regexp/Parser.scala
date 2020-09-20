@@ -2,14 +2,17 @@ package codes.quine.labo.redos
 package regexp
 
 import scala.annotation.switch
-import scala.util.{Try, Success, Failure}
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
-import com.ibm.icu.lang.{UCharacter, UProperty}
+import com.ibm.icu.lang.UCharacter
+import com.ibm.icu.lang.UProperty
 import com.ibm.icu.text.UnicodeSet
+import fastparse._
 
-import fastparse._, NoWhitespace._
-
-import Pattern.{Node, ClassItem, FlagSet, Character}
+import NoWhitespace._
+import Pattern.{Node, ClassItem, FlagSet}
 import Parser.{ID_START, ID_CONTINUE}
 
 object Parser {

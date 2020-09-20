@@ -4,12 +4,19 @@ package util
 import scala.util.chaining._
 
 import com.ibm.icu.lang.UCharacter
-
-import guru.nidi.graphviz.attribute.{Attributed, ForGraph, ForLink, ForNode, Label, Shape, Rank, Attributes}
+import guru.nidi.graphviz.attribute.Attributed
+import guru.nidi.graphviz.attribute.Attributes
+import guru.nidi.graphviz.attribute.ForGraph
+import guru.nidi.graphviz.attribute.ForLink
+import guru.nidi.graphviz.attribute.ForNode
+import guru.nidi.graphviz.attribute.Label
+import guru.nidi.graphviz.attribute.Rank
+import guru.nidi.graphviz.attribute.Shape
 import guru.nidi.graphviz.engine.Graphviz
 import guru.nidi.graphviz.model
-import guru.nidi.graphviz.model.{Link, Node, Factory}
-import guru.nidi.graphviz.engine.Format
+import guru.nidi.graphviz.model.Factory
+import guru.nidi.graphviz.model.Link
+import guru.nidi.graphviz.model.Node
 
 /**
   * GraphRenderer is a type class for rendering graph-like data structure by Graphviz.
