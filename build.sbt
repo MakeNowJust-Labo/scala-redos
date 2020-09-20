@@ -44,7 +44,7 @@ lazy val root = project
     Compile / console / scalacOptions -= "-Wunused",
     libraryDependencies ++= Seq(
       compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.1" cross CrossVersion.full),
-      "com.github.ghik" % "silencer-lib" % "1.7.1" % Provided cross CrossVersion.full,
+      "com.github.ghik" % "silencer-lib" % "1.7.1" % Provided cross CrossVersion.full
     ),
     // Set URL mapping of scala standard API for Scaladoc.
     autoAPIMappings := true,
