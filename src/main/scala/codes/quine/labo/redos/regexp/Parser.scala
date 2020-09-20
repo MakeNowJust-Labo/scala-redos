@@ -151,8 +151,8 @@ final private class Parser(
         case Pattern.LineBegin                      => Pass(Pattern.LineBegin)
         case Pattern.LineEnd                        => Pass(Pattern.LineEnd)
         case node =>
-          Repeat.map {
-            case (nonGreedy, min, max) => Pattern.Repeat(nonGreedy, min, max, node)
+          Repeat.map { case (nonGreedy, min, max) =>
+            Pattern.Repeat(nonGreedy, min, max, node)
           } |
             ("*?" ~ Pass(Pattern.Star(true, node))) |
             ("*" ~ Pass(Pattern.Star(false, node))) |
@@ -171,8 +171,8 @@ final private class Parser(
           Digits ~
           ("," ~ (Digits.map(n => Option(Option(n))) | Pass(Option(None))) | Pass(None)) ~ "}" ~
           (("?": P[Unit]).map(_ => true) | Pass(false))
-      ).map {
-        case (min, max, nonGreedy) => (nonGreedy, min, max)
+      ).map { case (min, max, nonGreedy) =>
+        (nonGreedy, min, max)
       }
     }
 
@@ -340,15 +340,15 @@ final private class Parser(
         ("(?!" ~/ Disjunction ~ ")").map(Pattern.LookAhead(true, _)) |
         ("(?<=" ~/ Disjunction ~ ")").map(Pattern.LookBehind(false, _)) |
         ("(?<!" ~/ Disjunction ~ ")").map(Pattern.LookBehind(true, _)) |
-        ("(?<" ~/ CaptureName ~ ">" ~/ Disjunction ~ ")").map {
-          case (name, node) => Pattern.NamedCapture(name, node)
+        ("(?<" ~/ CaptureName ~ ">" ~/ Disjunction ~ ")").map { case (name, node) =>
+          Pattern.NamedCapture(name, node)
         }
     }
 
   private def CaptureName[_: P]: P[String] =
     P {
-      (CaptureNameChar.filter(isIDStart(_)) ~ CaptureNameChar.filter(isIDPart(_)).rep).map {
-        case (x, xs) => String.valueOf((x +: xs).toArray.flatMap(UCharacter.toChars(_)))
+      (CaptureNameChar.filter(isIDStart(_)) ~ CaptureNameChar.filter(isIDPart(_)).rep).map { case (x, xs) =>
+        String.valueOf((x +: xs).toArray.flatMap(UCharacter.toChars(_)))
       }
     }
 
