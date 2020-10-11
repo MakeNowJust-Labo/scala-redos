@@ -17,8 +17,7 @@ import Parser.{ID_START, ID_CONTINUE}
 
 object Parser {
 
-  /**
-    * Parse ECMA-262 RegExp string.
+  /** Parse ECMA-262 RegExp string.
     *
     * @param source a source string
     * @param flags a flag set string
@@ -44,8 +43,7 @@ object Parser {
     .applyIntPropertyValue(UProperty.ID_CONTINUE, 1)
     .freeze()
 
-  /**
-    * Parse a flag set string.
+  /** Parse a flag set string.
     *
     * @param s a flag set string
     * @return Success with parsed flag set if parsing is succeeded, or Failure
@@ -68,8 +66,7 @@ object Parser {
       )
   }
 
-  /**
-    * Count capture parentheses in the source and determine the source contains named capture.
+  /** Count capture parentheses in the source and determine the source contains named capture.
     *
     * @param s a source string
     * @return the first value is a flag whether the source contains named capture or not,
@@ -110,8 +107,7 @@ object Parser {
   }
 }
 
-/**
-  * Parser is ECMA-262 RegExp parser implementation.
+/** Parser is ECMA-262 RegExp parser implementation.
   *
   * ECMA-262 RegExp syntax is modified when unicode flag is enabled or/and source has named captures.
   * So, its constuctor takes these parameters.
