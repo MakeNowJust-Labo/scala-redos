@@ -7,8 +7,7 @@ import com.ibm.icu.lang.UCharacter
 
 import Pattern._
 
-/**
-  * Pattern is ECMA-262 RegExp pattern data.
+/** Pattern is ECMA-262 RegExp pattern data.
   *
   * @param flagSet a flag set of this pattern
   * @param root a root node of this pattern

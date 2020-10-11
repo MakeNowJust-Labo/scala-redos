@@ -19,8 +19,7 @@ import guru.nidi.graphviz.model.Factory
 import guru.nidi.graphviz.model.Link
 import guru.nidi.graphviz.model.Node
 
-/**
-  * GraphRenderer is a type class for rendering graph-like data structure by Graphviz.
+/** GraphRenderer is a type class for rendering graph-like data structure by Graphviz.
   *
   * @tparam T data type
   */
@@ -33,16 +32,14 @@ trait GraphRenderer[T] {
   /** A type of edge label. */
   type EdgeLabel
 
-  /**
-    * Convert this data to graph for rendering.
+  /** Convert this data to graph for rendering.
     *
     * @param t a data
     * @return a graph corresponding to the data
     */
   def graph(t: T): Graph[Vertex, EdgeLabel]
 
-  /**
-    * Apply graph attributes into Graphviz data.
+  /** Apply graph attributes into Graphviz data.
     *
     * @param t a data
     * @param attr attributes data for Graphviz graph
@@ -50,8 +47,7 @@ trait GraphRenderer[T] {
     */
   def globalGraphAttributes(t: T, attr: Attributed[model.Graph, ForGraph]): model.Graph = attr.`with`()
 
-  /**
-    * Apply vertex (node) attributes into Graphviz data.
+  /** Apply vertex (node) attributes into Graphviz data.
     *
     * @param t a data
     * @param attr attributes data for Graphviz node
@@ -59,8 +55,7 @@ trait GraphRenderer[T] {
     */
   def globalVertexAttributes(t: T, attr: Attributed[model.Graph, ForNode]): model.Graph = attr.`with`()
 
-  /**
-    * Apply vertex (node) attributes into Graphviz data.
+  /** Apply vertex (node) attributes into Graphviz data.
     *
     * @param t a data
     * @param attr attributes data for Graphviz node
@@ -68,8 +63,7 @@ trait GraphRenderer[T] {
     */
   def globalEdgeAttributes(t: T, attr: Attributed[model.Graph, ForLink]): model.Graph = attr.`with`()
 
-  /**
-    * Get a label of each vertices.
+  /** Get a label of each vertices.
     *
     * @param t a data
     * @param v a vertex
@@ -77,8 +71,7 @@ trait GraphRenderer[T] {
     */
   def vertexLabel(t: T, v: Vertex): Label = Label.of(v.toString)
 
-  /**
-    * Apply vertex (node) attributes of each vertices into Graphviz data.
+  /** Apply vertex (node) attributes of each vertices into Graphviz data.
     *
     * @param t a data
     * @param v a vertex
@@ -87,8 +80,7 @@ trait GraphRenderer[T] {
     */
   def vertexAttributes(t: T, v: Vertex, node: Node): Node = node
 
-  /**
-    * Apply edge (link) attributes of each vertices into Graphviz data.
+  /** Apply edge (link) attributes of each vertices into Graphviz data.
     *
     * @param t a data
     * @param v1 a source vertex
@@ -109,8 +101,7 @@ object GraphRenderer {
   /** Summon [[GraphRenderer]] instance. */
   def apply[T](implicit T: GraphRenderer[T]): Aux[T, T.Vertex, T.EdgeLabel] = T
 
-  /**
-    * Build Graphviz instance for rendering.
+  /** Build Graphviz instance for rendering.
     *
     * @param t a rendered data
     * @return Graphviz instance for rendering
@@ -143,15 +134,13 @@ object GraphRenderer {
     Graphviz.fromGraph(graphviz)
   }
 
-  /**
-    * AlphabetLabel is a type class of alphabet for rendering.
+  /** AlphabetLabel is a type class of alphabet for rendering.
     *
     * @tparam A alphabet type
     */
   trait AlphabetLabel[A] {
 
-    /**
-      * Convert an alphabet character into a Graphviz label.
+    /** Convert an alphabet character into a Graphviz label.
       *
       * @param A an alphabet character
       * @return a GraphViz label
@@ -164,16 +153,14 @@ object GraphRenderer {
     /** Summon [[AlphabetLabel]] instance. */
     def apply[A](implicit A: AlphabetLabel[A]): AlphabetLabel[A] = A
 
-    /**
-      * Build Graphviz label from alphabet character.
+    /** Build Graphviz label from alphabet character.
       *
       * @param a an alphabet character
       * @return a GraphViz label
       */
     def of[A: AlphabetLabel](a: A): Label = AlphabetLabel[A].label(a)
 
-    /**
-      * Create an [[AlphabetLabel]] instance from function.
+    /** Create an [[AlphabetLabel]] instance from function.
       *
       * @param f a label function
       * @return an AlphabetLabel instance
@@ -190,15 +177,13 @@ object GraphRenderer {
       }
   }
 
-  /**
-    * StateLabel is a type class of state for rendering.
+  /** StateLabel is a type class of state for rendering.
     *
     * @tparam Q state type
     */
   trait StateLabel[Q] {
 
-    /**
-      * Convert a state into a label text.
+    /** Convert a state into a label text.
       *
       * @param q a state
       * @return a label text
@@ -211,16 +196,14 @@ object GraphRenderer {
     /** Summon [[StateLabel]] instance. */
     def apply[Q](implicit Q: StateLabel[Q]): StateLabel[Q] = Q
 
-    /**
-      * Build Graphviz label from state.
+    /** Build Graphviz label from state.
       *
       * @param q a state
       * @return a GraphViz label
       */
     def of[Q: StateLabel](q: Q): Label = Label.of(StateLabel[Q].label(q))
 
-    /**
-      * Create a [[StateLabel]] instance from function.
+    /** Create a [[StateLabel]] instance from function.
       *
       * @param f a label function
       * @return a StateLabel instance
@@ -239,8 +222,7 @@ object GraphRenderer {
       from { case (q1, q2) => s"(${StateLabel[Q1].label(q1)}, ${StateLabel[Q2].label(q2)})" }
   }
 
-  /**
-    * Create a [[GraphRenderer]] instance for finite automata.
+  /** Create a [[GraphRenderer]] instance for finite automata.
     *
     * @param toGraph a graph converter function
     * @param isInit a prediction to decide initial state
